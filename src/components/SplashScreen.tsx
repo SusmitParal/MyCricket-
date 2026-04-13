@@ -138,35 +138,41 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
               animate={{ opacity: 1, y: 0 }}
               className="flex flex-col items-center"
             >
-              {/* Cinematic Impact Animation - Glass Break */}
-              <div className="relative w-full h-40 mb-8 flex items-center justify-center">
+              {/* Stylized Cricket Graphic */}
+              <div className="relative w-64 h-64 mb-8 flex items-center justify-center">
+                {/* Wickets */}
+                <div className="absolute flex gap-2 z-10">
+                  <div className="w-2 h-24 bg-yellow-500 rounded-sm" />
+                  <div className="w-2 h-24 bg-yellow-500 rounded-sm" />
+                  <div className="w-2 h-24 bg-yellow-500 rounded-sm" />
+                </div>
+                
+                {/* Crossed Bats */}
                 <motion.div
-                  initial={{ rotate: -60, x: -300, opacity: 0 }}
-                  animate={{ rotate: 20, x: -40, opacity: 1 }}
-                  transition={{ duration: 0.4, ease: "circOut", delay: 0.2 }}
-                  className="absolute z-20 origin-top"
+                  initial={{ rotate: -45, opacity: 0 }}
+                  animate={{ rotate: -45, opacity: 1 }}
+                  className="absolute w-12 h-64 bg-amber-100 rounded-t-full rounded-b-sm z-20 shadow-lg border-l-4 border-amber-200"
                 >
-                  <div className="w-10 h-48 bg-gradient-to-b from-[#e9c46a] to-[#8b5e34] rounded-b-lg border-2 border-[#5c3d2e] shadow-[0_10px_30px_rgba(0,0,0,0.5)] relative">
-                    <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-4 h-20 bg-[#1a1a1a] rounded-t-full" />
-                  </div>
+                  <div className="w-full h-8 bg-amber-200 mt-4" />
+                </motion.div>
+                <motion.div
+                  initial={{ rotate: 45, opacity: 0 }}
+                  animate={{ rotate: 45, opacity: 1 }}
+                  className="absolute w-12 h-64 bg-amber-100 rounded-t-full rounded-b-sm z-20 shadow-lg border-r-4 border-amber-200"
+                >
+                  <div className="w-full h-8 bg-amber-200 mt-4" />
                 </motion.div>
 
-                <motion.div
-                  initial={{ x: 400, y: -50, opacity: 0 }}
-                  animate={{ x: -40, y: 10, opacity: 1 }}
-                  transition={{ duration: 0.4, ease: "linear", delay: 0.2 }}
-                  className="absolute z-30"
-                >
-                  <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-red-900 rounded-full shadow-[0_0_30px_rgba(220,38,38,0.8)] border border-white/20" />
-                </motion.div>
-
-                {/* Glass Break Effect - Simplified */}
+                {/* Cricket Ball */}
                 <motion.div
                   initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: [0, 1.5], opacity: [0, 1, 0] }}
-                  transition={{ duration: 0.3, delay: 0.55 }}
-                  className="absolute w-64 h-64 border-4 border-white/30 rounded-lg z-40"
-                />
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", delay: 0.3 }}
+                  className="absolute w-24 h-24 bg-red-600 rounded-full border-4 border-red-800 z-30 shadow-[0_0_20px_rgba(220,38,38,0.5)] flex items-center justify-center"
+                >
+                  <div className="w-full h-1 bg-white/30 rotate-45 absolute" />
+                  <div className="w-full h-1 bg-white/30 -rotate-45 absolute" />
+                </motion.div>
               </div>
 
               <div className="relative mb-4">

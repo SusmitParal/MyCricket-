@@ -108,11 +108,10 @@ export default function App() {
 
   if (showTournament) {
     return (
-      <>
+      <div className="min-h-screen bg-brutal-black text-white">
         <AnimatePresence>
           {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
         </AnimatePresence>
-        <div className="min-h-screen bg-brutal-black text-white">
         {!isTournamentLive && (
           <button onClick={() => setShowTournament(false)} className="p-6 text-neon-cyan">Back</button>
         )}
@@ -149,7 +148,6 @@ export default function App() {
           initialTournamentId={selectedTournamentId}
         />
       </div>
-    </>
   );
 }
 
@@ -233,10 +231,6 @@ export default function App() {
   }
 
   return (
-    <>
-      <AnimatePresence>
-        {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
-      </AnimatePresence>
       <motion.div 
         animate={showGlassBreak ? {
           x: [0, -10, 10, -10, 10, 0],
@@ -422,7 +416,6 @@ export default function App() {
         )}
       </AnimatePresence>
       </motion.div>
-    </>
   );
 }
 
