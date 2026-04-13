@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-neon-cyan: #00FFFF;
+  --color-brutal-black: #000000;
+  --color-gallery-white: #FFFFFF;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-serif: "Playfair Display", serif;
+}
+
+@layer base {
+  body {
+    @apply bg-brutal-black text-gallery-white font-sans;
+  }
+}
+
+.data-grid-row {
+  @apply grid grid-cols-[40px_1.5fr_1fr_1fr] p-4 border-b border-white/20 transition-colors duration-200 cursor-pointer hover:bg-neon-cyan hover:text-brutal-black;
+}
+
+.col-header {
+  @apply font-serif italic text-[11px] opacity-50 uppercase tracking-wider;
+}
+
+.data-value {
+  @apply font-mono tracking-tighter;
+}
+
+.hardware-widget {
+  @apply bg-brutal-black text-gallery-white rounded-xl shadow-2xl border border-neon-cyan/50;
+}

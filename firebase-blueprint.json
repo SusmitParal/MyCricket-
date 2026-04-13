@@ -1,0 +1,76 @@
+{
+  "entities": {
+    "Player": {
+      "title": "Player",
+      "description": "A cricket player",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "team_id": { "type": "string" },
+        "name": { "type": "string" },
+        "is_captain": { "type": "boolean" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "team_id", "name", "is_captain", "created_at"]
+    },
+    "Team": {
+      "title": "Team",
+      "description": "A cricket team",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "tournament_id": { "type": "string" },
+        "name": { "type": "string" },
+        "icon": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "created_at"]
+    },
+    "Tournament": {
+      "title": "Tournament",
+      "description": "A cricket tournament",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "format": { "type": "string", "enum": ["test", "odi", "t20"] },
+        "status": { "type": "string", "enum": ["ongoing", "finished"] },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "format", "status", "created_at"]
+    },
+    "Match": {
+      "title": "Match",
+      "description": "A cricket match",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "team_a_id": { "type": "string" },
+        "team_b_id": { "type": "string" },
+        "match_type": { "type": "string", "enum": ["test", "odi", "t20"] },
+        "status": { "type": "string", "enum": ["ongoing", "finished"] },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "team_a_id", "team_b_id", "match_type", "status", "created_at"]
+    },
+    "Ball": {
+      "title": "Ball",
+      "description": "A single ball in a match",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "match_id": { "type": "string" },
+        "runs": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "match_id", "runs", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/players/{playerId}": { "schema": { "$ref": "Player" }, "description": "Players collection" },
+    "/teams/{teamId}": { "schema": { "$ref": "Team" }, "description": "Teams collection" },
+    "/tournaments/{tournamentId}": { "schema": { "$ref": "Tournament" }, "description": "Tournaments collection" },
+    "/matches/{matchId}": { "schema": { "$ref": "Match" }, "description": "Matches collection" },
+    "/matches/{matchId}/balls/{ballId}": { "schema": { "$ref": "Ball" }, "description": "Balls collection" }
+  }
+}
