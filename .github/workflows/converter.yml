@@ -1,0 +1,158 @@
+# ENGINE_VERSION: 3.5.5
+name: Web2App-AI-Core
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [build_apk]
+
+permissions:
+  contents: write
+
+jobs:
+  make-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Install Tools
+        run: |
+          npm install -g @capacitor/cli @capacitor/assets
+          npm install @capacitor/core @capacitor/android
+
+      - name: Build APK Artifact
+        env:
+          PAYLOAD_DATA: ${{ toJson(github.event.client_payload) }}
+        run: |
+          echo "$PAYLOAD_DATA" > payload.json
+          
+          cat <<'EOF' > build_script.cjs
+          const fs = require('fs');
+          const { execSync } = require('child_process');
+          
+          function run(cmd, cwd) {
+            console.log('\n>>> [ENGINE] EXEC: ' + cmd);
+            try {
+              return execSync(cmd, { stdio: 'inherit', cwd });
+            } catch (e) {
+              console.error('\n🔴 [ENGINE] CRITICAL FAILURE: ' + cmd);
+              process.exit(1);
+            }
+          }
+
+          try {
+            const payload = JSON.parse(fs.readFileSync('payload.json', 'utf8')) || {};
+            const appName = payload.app_name || 'My App';
+            const packageId = payload.package_id || 'com.example.app';
+            let vercelUrl = payload.vercel_url || '';
+            if (vercelUrl && !vercelUrl.startsWith('http')) vercelUrl = 'https://' + vercelUrl;
+
+            console.log('--- Phase 1: Environment Logic ---');
+            const config = {
+              appId: packageId,
+              appName: appName,
+              webDir: 'www',
+              bundledWebRuntime: false,
+              server: { url: vercelUrl, cleartext: true }
+            };
+            fs.writeFileSync('capacitor.config.json', JSON.stringify(config, null, 2));
+            
+            if (!fs.existsSync('www')) fs.mkdirSync('www');
+            fs.writeFileSync('www/index.html', '<html><body><script>window.location.href="' + vercelUrl + '"</script></body></html>');
+            if (!fs.existsSync('assets')) fs.mkdirSync('assets');
+            
+            console.log('--- Phase 2: Branding Lockdown ---');
+            const iconUrl = payload.icon_url;
+            if (iconUrl) {
+              console.log('>>> [ENGINE] Fetching custom branding...');
+              run('curl --retry 5 -f -L "' + iconUrl + '" -o assets/logo.png');
+            } else {
+              run('curl -L "https://cdn-icons-png.flaticon.com/512/5968/5968260.png" -o assets/logo.png');
+            }
+            
+            fs.copyFileSync('assets/logo.png', 'assets/icon-only.png');
+            fs.copyFileSync('assets/logo.png', 'assets/icon-foreground.png');
+            fs.copyFileSync('assets/logo.png', 'assets/icon-background.png');
+            fs.copyFileSync('assets/logo.png', 'assets/splash.png');
+            fs.copyFileSync('assets/logo.png', 'assets/splash-dark.png');
+
+            console.log('--- Phase 3: Native Subsystem ---');
+            if (fs.existsSync('android')) {
+                console.log('>>> [ENGINE] Resetting android subsystem...');
+                run('rm -rf android');
+            }
+            run('npx cap add android');
+
+            console.log('--- Phase 4: Build Optimization ---');
+            const gradlePath = 'android/app/build.gradle';
+            let gradle = fs.readFileSync(gradlePath, 'utf8');
+            
+            // Comprehensive version alignment
+            gradle = gradle.replace(/compileSdks+d+/g, 'compileSdk 34');
+            gradle = gradle.replace(/targetSdks+d+/g, 'targetSdk 34');
+            gradle = gradle.replace(/JavaVersion.VERSION_1_8/g, 'JavaVersion.VERSION_17');
+            gradle = gradle.replace(/JavaVersion.VERSION_11/g, 'JavaVersion.VERSION_17');
+            gradle = gradle.replace(/JavaVersion.VERSION_21/g, 'JavaVersion.VERSION_17');
+            
+            // Fix jvmTarget
+            if (gradle.includes('kotlinOptions')) {
+                gradle = gradle.replace(/jvmTargets*=s*['"][^'"]*['"]/g, 'jvmTarget = "17"');
+            }
+            
+            // Add namespace if missing (required for AGP 8+)
+            if (!gradle.includes('namespace')) {
+                gradle = gradle.replace(/androids*{/, 'android {
+    namespace "' + packageId + '"');
+            }
+
+            // Disable google-services plugin to prevent "google-services.json missing" crash
+            gradle = gradle.replace(/applys+plugin:s+['"]com.google.gms.google-services['"]/g, '// deactivated google-services');
+            
+            fs.writeFileSync(gradlePath, gradle);
+
+            // Harden gradle.properties
+            const propPath = 'android/gradle.properties';
+            let props = fs.readFileSync(propPath, 'utf8');
+            if (!props.includes('android.useAndroidX')) {
+                props += '
+android.useAndroidX=true
+android.enableJetifier=true
+';
+                fs.writeFileSync(propPath, props);
+            }
+
+            run('npx capacitor-assets generate --android');
+            run('npx cap sync android');
+            run('chmod +x gradlew', 'android');
+            // Optimizing Gradle for GitHub Runner
+            run('./gradlew assembleDebug --no-daemon --stacktrace --max-workers 2', 'android');
+
+            console.log('--- Phase 5: Artifact Dispatch ---');
+            const apk = 'android/app/build/outputs/apk/debug/app-debug.apk';
+            if (fs.existsSync(apk) && payload.callback_url) {
+              const targetFilename = payload.filename || 'app.apk';
+              console.log('>>> [ENGINE] Transmitting artifact to gateway...');
+              run('curl --retry 3 -f -X POST "' + payload.callback_url + '/api/upload-apk?filename=' + targetFilename + '" -H "Content-Type: application/vnd.android.package-archive" --data-binary @"' + apk + '"');
+              console.log('🚀 [ENGINE] Build Process Perfected.');
+            } else {
+                console.error('🔴 [ENGINE] Build artifact not found at ' + apk);
+                process.exit(1);
+            }
+          } catch (e) {
+            console.error('🔴 [ENGINE] CRITICAL RUNTIME ERROR: ' + e.message);
+            process.exit(1);
+          }
+          EOF
+          node build_script.cjs
